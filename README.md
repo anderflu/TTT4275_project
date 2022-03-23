@@ -1,2 +1,2 @@
 # TTT4275_project
-Git repository til å samarbeide i esimering
+Git repository til å samarbeide i estimering
