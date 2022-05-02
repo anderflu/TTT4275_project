@@ -3,7 +3,9 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import statistics as st
+import xlwt
 from xlwt import Workbook
+import os
 
 
 
@@ -16,7 +18,7 @@ phi = np.pi/8
 A = 1
 N = 513
 n_0 = -256
-iterations = 2
+iterations = 10
 k = [10, 12, 14, 16, 18, 20]
 SNRs = [-10, 0, 10, 20, 30, 40, 50, 60]
 
@@ -27,7 +29,6 @@ Q = N*(N-1)/(2*N-1)/6
 
 #Write to excel file
 wb = Workbook()
-#sheet_name = input('Write filename for storing data: ')
 sheet_name = 'test'
 sheet = wb.add_sheet(sheet_name)
 path = 'data/' + sheet_name + '.xls'
@@ -44,7 +45,22 @@ sheet.write(0, 7, 'Mean phase estimate error')
 sheet.write(0, 8, 'Mean phase estimate error variance')
 sheet.write(0, 9, 'CRLB phase variance')
 
-   
+#Cell formatting
+sheet.col(0).width = 2400
+sheet.col(1).width = 2000
+sheet.col(2).width = 5600
+sheet.col(3).width = 5600
+sheet.col(4).width = 5600
+sheet.col(5).width = 5600
+sheet.col(6).width = 5600
+sheet.col(7).width = 5600
+sheet.col(8).width = 5600
+sheet.col(9).width = 5600
+
+dec0 = xlwt.XFStyle()
+dec0.num_format_str = '0'
+dec3 = xlwt.XFStyle()
+dec3.num_format_str = '0.000000000'
 
 
 def createSignal(variance):
@@ -147,18 +163,14 @@ def main():
             for l in range(iterations): #For each iteration
                 x, s, w = createSignal(variance)
                 x_fft, freq= fft_x(x, M)
-
+                #Two ways of calculating the frequency estimate
                 dominantFreq, n = peak_freq(x_fft, freq)
                 m_star = np.argmax(x_fft)
-                #omega_hat = 2*np.pi*dominantFreq
-                #error_omega = omega_0-omega_hat
-                #error_omega_list.append(error_omega)
-                omega_hat = m_star/(M*T)
-                freq_list.append(dominantFreq)
-
-                phase = np.angle(np.exp(-(1j*omega_hat*n_0*T))*x_fft[n])
-                phase_list.append(phase)
+                f_hat = m_star/(M*T)
+                freq_list.append(f_hat)
                 
+                phase = np.angle(np.exp(-(2j*np.pi*f_hat*n_0*T))*x_fft[m_star])
+                phase_list.append(phase)                
                 
                 #plot_signals(x, s, w)
                 #plot_spectrum(x_fft, freq)
@@ -174,16 +186,17 @@ def main():
 
             omega_CRLB, phi_CRLB = calculate_CRLB(variance)
 
+            #Write data to excel
             sheet.write(cntr, 0, '2^'+str(i)) #FFT length
             sheet.write(cntr, 1, snr_db) #SNR[dB]
-            sheet.write(cntr, 2, mean_freq) #Mean f estimate
-            sheet.write(cntr, 3, mean_freq_error) #Mean f estimate error
-            sheet.write(cntr, 4, mean_phase_error_variance) #Mean f estimate error variance
-            sheet.write(cntr, 5, omega_CRLB) #CRLB freq
-            sheet.write(cntr, 6, mean_phase) #Mean phi esitmate
-            sheet.write(cntr, 7, mean_phase_error) #Mean phi estimate error
-            sheet.write(cntr, 8, mean_phase_error_variance) #Mean phi estimate error variance
-            sheet.write(cntr, 9, phi_CRLB) #CRLB phase
+            sheet.write(cntr, 2, mean_freq, dec0) #Mean f estimate
+            sheet.write(cntr, 3, mean_freq_error, dec0) #Mean f estimate error
+            sheet.write(cntr, 4, mean_phase_error_variance, dec3) #Mean f estimate error variance
+            sheet.write(cntr, 5, omega_CRLB, dec3) #CRLB freq
+            sheet.write(cntr, 6, mean_phase, dec3) #Mean phi esitmate
+            sheet.write(cntr, 7, mean_phase_error, dec3) #Mean phi estimate error
+            sheet.write(cntr, 8, mean_phase_error_variance, dec3) #Mean phi estimate error variance
+            sheet.write(cntr, 9, phi_CRLB, dec3) #CRLB phase
     print('Data successfully written to file')    
     wb.save(path)
                 
@@ -194,9 +207,7 @@ main()
 
 #TO DO:
 
-
 #Finne dominant fase til signalet
-#Hvorfor dele på MT i likning 8
 
 
 #FFT-size = 2**20 er ikke mulig. Bruk estimat for FFT size 2**10, og tune estimatet med numerical search method
