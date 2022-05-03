@@ -136,12 +136,6 @@ def plot_spectrum(x_fft, freq): #Plots the power spectrum
     plt.show()
 
 
-def peak_freq(x_fft, fft_freqs): #Finds dominant frequency of the total signal
-    i = np.argmax(x_fft)
-    peak = fft_freqs[i]
-    return peak, i
-
-
 def calculate_CRLB(var):
     var_omega = (12*var**2)/(A**2*T**2*N*(N**2-1))
     var_phi = (12*var**2)*(n_0**2*N + 2*n_0*P*Q)/(A**2*N**2*(N**2-1))
@@ -164,8 +158,8 @@ def main():
                 x, s, w = createSignal(variance)
                 x_fft, freq= fft_x(x, M)
                 #Two ways of calculating the frequency estimate
-                dominantFreq, n = peak_freq(x_fft, freq)
                 m_star = np.argmax(x_fft)
+                dominantFreq = freq[m_star]
                 f_hat = m_star/(M*T)
                 freq_list.append(f_hat)
                 
@@ -197,7 +191,7 @@ def main():
             sheet.write(cntr, 7, mean_phase_error, dec3) #Mean phi estimate error
             sheet.write(cntr, 8, mean_phase_error_variance, dec3) #Mean phi estimate error variance
             sheet.write(cntr, 9, phi_CRLB, dec3) #CRLB phase
-    print('Data successfully written to file')    
+    print('Data successfully written to '+ sheet_name + '.xls')    
     wb.save(path)
                 
 
