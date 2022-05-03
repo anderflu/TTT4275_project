@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import statistics as st
 from xlwt import Workbook
 
-
-
 #Constants
 F_s = 10**6
 T = 10**(-6)
@@ -19,7 +17,6 @@ n_0 = -256
 iterations = 2
 k = [10, 12, 14, 16, 18, 20]
 SNRs = [-10, 0, 10, 20, 30, 40, 50, 60]
-
 
 #CRLB values
 P = N*(N-1)/2
@@ -44,9 +41,6 @@ sheet.write(0, 7, 'Mean phase estimate error')
 sheet.write(0, 8, 'Mean phase estimate error variance')
 sheet.write(0, 9, 'CRLB phase variance')
 
-   
-
-
 def createSignal(variance):
     #Complex gaussian white noise
     stdDev = np.sqrt(variance)
@@ -67,7 +61,6 @@ def createSignal(variance):
         x.append(s[n]+w[n])
 
     return x, s, w
-
    
 def plot_signals(x, s, w): #Plots the signals S & w and x in two separate plots
     t = np.linspace(start=0, stop=N*T, num=N)
@@ -87,13 +80,11 @@ def plot_signals(x, s, w): #Plots the signals S & w and x in two separate plots
 
     plt.show()
 
-
 def fft_x(total_signal, fft_size): #Find the fft-signal and the frequency axis
     fft_x = np.fft.fft(total_signal, n = fft_size)
     fft_freqs = np.fft.fftfreq(n = fft_size, d = T)
     
     return fft_x, fft_freqs
-
 
 def fft_x_sorted(total_signal): #Sorts fft_freqs chronolgically and lines fft_x up with fft_freqs
     x_fft, fft_freqs = fft_x(total_signal)
@@ -109,7 +100,6 @@ def fft_x_sorted(total_signal): #Sorts fft_freqs chronolgically and lines fft_x 
     
     return x_fft_sorted, fft_freqs_sorted
     
-
 def plot_spectrum(x_fft, freq): #Plots the power spectrum
     plt.title("Power spectrum of signal")
     plt.xlabel("Frequency [Hz]")
@@ -119,19 +109,16 @@ def plot_spectrum(x_fft, freq): #Plots the power spectrum
     plt.plot(freq, 20*np.log10(np.abs(x_fft)))
     plt.show()
 
-
 def peak_freq(x_fft, fft_freqs): #Finds dominant frequency of the total signal
     i = np.argmax(x_fft)
     peak = fft_freqs[i]
     return peak, i
-
 
 def calculate_CRLB(var):
     var_omega = (12*var**2)/(A**2*T**2*N*(N**2-1))
     var_phi = (12*var**2)*(n_0**2*N + 2*n_0*P*Q)/(A**2*N**2*(N**2-1))
 
     return var_omega, var_phi
-
 
 def main():
 
@@ -158,7 +145,6 @@ def main():
 
                 phase = np.angle(np.exp(-(1j*omega_hat*n_0*T))*x_fft[n])
                 phase_list.append(phase)
-                
                 
                 #plot_signals(x, s, w)
                 #plot_spectrum(x_fft, freq)
