@@ -7,8 +7,6 @@ import xlwt
 from xlwt import Workbook
 import os
 
-
-
 #Constants
 F_s = 10**6
 T = 10**(-6)
@@ -21,7 +19,6 @@ n_0 = -256
 iterations = 10
 k = [10, 12, 14, 16, 18, 20]
 SNRs = [-10, 0, 10, 20, 30, 40, 50, 60]
-
 
 #CRLB values
 P = N*(N-1)/2
@@ -83,7 +80,6 @@ def createSignal(variance):
         x.append(s[n]+w[n])
 
     return x, s, w
-
    
 def plot_signals(x, s, w): #Plots the signals S & w and x in two separate plots
     t = np.linspace(start=0, stop=N*T, num=N)
@@ -103,13 +99,11 @@ def plot_signals(x, s, w): #Plots the signals S & w and x in two separate plots
 
     plt.show()
 
-
 def fft_x(total_signal, fft_size): #Find the fft-signal and the frequency axis
     fft_x = np.fft.fft(total_signal, n = fft_size)
     fft_freqs = np.fft.fftfreq(n = fft_size, d = T)
     
     return fft_x, fft_freqs
-
 
 def fft_x_sorted(total_signal): #Sorts fft_freqs chronolgically and lines fft_x up with fft_freqs
     x_fft, fft_freqs = fft_x(total_signal)
@@ -125,7 +119,6 @@ def fft_x_sorted(total_signal): #Sorts fft_freqs chronolgically and lines fft_x 
     
     return x_fft_sorted, fft_freqs_sorted
     
-
 def plot_spectrum(x_fft, freq): #Plots the power spectrum
     plt.title("Power spectrum of signal")
     plt.xlabel("Frequency [Hz]")
@@ -141,7 +134,6 @@ def calculate_CRLB(var):
     var_phi = (12*var**2)*(n_0**2*N + 2*n_0*P*Q)/(A**2*N**2*(N**2-1))
 
     return var_omega, var_phi
-
 
 def main():
 
