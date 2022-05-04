@@ -1,10 +1,11 @@
+from cmath import pi
 from xml import dom
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 import statistics as st
 from xlwt import Workbook
-import scipy
+from scipy import optimize
 
 #Constants
 F_s = 10**6
@@ -121,20 +122,42 @@ def calculate_CRLB(var):
 
     return var_omega, var_phi
 
+def functionToBeMinimized(f_variable):
+    f_var_sliced=f_variable
+    #Creating all nesicarry signal in this function, one can use the create signal function
+    s=[] #Signal without noise
+    for n in range(N):
+        s.append(A*np.exp(np.complex(0,1)*((2*np*pi*f_var_sliced)(n+n_0)*T+phi)))
+    
+    stdDev = np.sqrt(variance)
+    w_Re = np.random.normal(0, stdDev, N)                      
+    w_Im = np.random.normal(0, stdDev, N)
+    w= []
+    for n in range(N):
+        w.append(w_Re[n] + 1j*w_Im[n])
+    
 
+
+
+    fftGuess=np.fft.fft(s,2**10)
+    xbFFT=np.fft.fft(x,2**10)
+
+    MSE=np.square(np.subtract(abs(fftGuess),abs(xbFFT))).mean()
+    return MSE
 
 def main():
 
     cntr = 0
     
     M = 2**10
-    for snr_db in SNRs: #For each SNR-value
-            cntr += 1
-            snr = 10**(snr_db/10)
-            variance = A**2/(2*snr)
-            freq_list = [] #Temporarely store frequency values
-            phase_list = [] #Temporarely store phase values
-            for l in range(iterations): #For each iteration
+    #fjernet snr for å se om det endret noe
+    snr_db=30
+    cntr += 1
+    snr = 10**(snr_db/10)
+    variance = A**2/(2*snr)
+    freq_list = [] #Temporarely store frequency values
+    phase_list = [] #Temporarely store phase values
+    for l in range(iterations): #For each iteration
                 x, s, w = createSignal(variance)
                 x_fft, freq= fft_x(x, M)
 
@@ -149,31 +172,36 @@ def main():
                 phase = np.angle(np.exp(-(1j*omega_hat*n_0*T))*x_fft[n])
                 phase_list.append(phase)
                 
+                
+
                 #plot_signals(x, s, w)
                 #plot_spectrum(x_fft, freq)
             
-            mean_freq = st.mean(freq_list)
-            mean_freq_error = f_0 - mean_freq
-            mean_phase_error_variance = st.variance(freq_list)
+    b=optimize.minimize(omega_hat, omega_hat[0],method='nelder-mead')
+
+    mean_freq = st.mean(freq_list)
+    mean_freq_error = f_0 - mean_freq
+    mean_phase_error_variance = st.variance(freq_list)
             
 
-            mean_phase = st.mean(phase_list)
-            mean_phase_error = phi - mean_phase
-            mean_phase_error_variance = st.variance(phase_list)
+    mean_phase = st.mean(phase_list)
+    mean_phase_error = phi - mean_phase
+    mean_phase_error_variance = st.variance(phase_list)
 
-            omega_CRLB, phi_CRLB = calculate_CRLB(variance)
+    omega_CRLB, phi_CRLB = calculate_CRLB(variance)
 
-            sheet.write(cntr, 0, '2^'+str(M)) #FFT length
-            sheet.write(cntr, 1, snr_db) #SNR[dB]
-            sheet.write(cntr, 2, mean_freq) #Mean f estimate
-            sheet.write(cntr, 3, mean_freq_error) #Mean f estimate error
-            sheet.write(cntr, 4, mean_phase_error_variance) #Mean f estimate error variance
-            sheet.write(cntr, 5, omega_CRLB) #CRLB freq
-            sheet.write(cntr, 6, mean_phase) #Mean phi esitmate
-            sheet.write(cntr, 7, mean_phase_error) #Mean phi estimate error
-            sheet.write(cntr, 8, mean_phase_error_variance) #Mean phi estimate error variance
-            sheet.write(cntr, 9, phi_CRLB) #CRLB phase
-    print('Data successfully written to file')    
+    sheet.write(cntr, 0, '2^'+str(M)) #FFT length
+    sheet.write(cntr, 1, snr_db) #SNR[dB]
+    sheet.write(cntr, 2, mean_freq) #Mean f estimate
+    sheet.write(cntr, 3, mean_freq_error) #Mean f estimate error
+    sheet.write(cntr, 4, mean_phase_error_variance) #Mean f estimate error variance
+    sheet.write(cntr, 5, omega_CRLB) #CRLB freq
+    sheet.write(cntr, 6, mean_phase) #Mean phi esitmate
+    sheet.write(cntr, 7, mean_phase_error) #Mean phi estimate error
+    sheet.write(cntr, 8, mean_phase_error_variance) #Mean phi estimate error variance
+    sheet.write(cntr, 9, phi_CRLB) #CRLB phase
+    print('Data successfully written to file')   
+    print(omega_0) 
     wb.save(path)
                 
 
