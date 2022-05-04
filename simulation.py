@@ -1,11 +1,13 @@
-from xml import dom
 import numpy as np
-import math
 import matplotlib.pyplot as plt
 import statistics as st
-import xlwt
-from xlwt import Workbook
-import os
+from xlwt import Workbook, XFStyle
+import time
+
+start = time.process_time()
+ 
+
+
 
 #Constants
 F_s = 10**6
@@ -22,7 +24,7 @@ SNRs = [-10, 0, 10, 20, 30, 40, 50, 60]
 
 #CRLB values
 P = N*(N-1)/2
-Q = N*(N-1)/(2*N-1)/6
+Q = N*(N-1)*(2*N-1)/6
 
 #Write to excel file
 wb = Workbook()
@@ -53,12 +55,12 @@ sheet.col(6).width = 5600
 sheet.col(7).width = 5600
 sheet.col(8).width = 5600
 sheet.col(9).width = 5600
-
-dec0 = xlwt.XFStyle()
-dec0.num_format_str = '0'
-dec3 = xlwt.XFStyle()
+'''
+dec0 = XFStyle()
+dec0.num_format_str = '0.0'
+dec3 = XFStyle()
 dec3.num_format_str = '0.000000000'
-
+'''
 
 def createSignal(variance):
     #Complex gaussian white noise
@@ -105,33 +107,22 @@ def fft_x(total_signal, fft_size): #Find the fft-signal and the frequency axis
     
     return fft_x, fft_freqs
 
-def fft_x_sorted(total_signal): #Sorts fft_freqs chronolgically and lines fft_x up with fft_freqs
-    x_fft, fft_freqs = fft_x(total_signal)
-    middle_index = np.argmax(fft_freqs) + 1
-    first = x_fft[:middle_index]
-    second = x_fft[middle_index:]
-    x_fft_sorted = []
-    for i in range(len(second)):
-        x_fft_sorted.append(second[i])
-    for i in range(len(first)):
-        x_fft_sorted.append(first[i])
-    fft_freqs_sorted = fft_freqs.sort() 
-    
-    return x_fft_sorted, fft_freqs_sorted
     
 def plot_spectrum(x_fft, freq): #Plots the power spectrum
+    middle_index = np.argmax(freq) + 1
     plt.title("Power spectrum of signal")
     plt.xlabel("Frequency [Hz]")
     plt.ylabel("Power [dB]")
     #plt.xlim(-450000, 450000)
     #plt.ylim(-1, 200)
-    plt.plot(freq, 20*np.log10(np.abs(x_fft)))
+    plt.plot(freq[:middle_index], 20*np.log10(np.abs(x_fft[:middle_index])), color = '#1f77b4')
+    plt.plot(freq[middle_index:], 20*np.log10(np.abs(x_fft[middle_index:])), color = '#1f77b4')
     plt.show()
 
 
 def calculate_CRLB(var):
-    var_omega = (12*var**2)/(A**2*T**2*N*(N**2-1))
-    var_phi = (12*var**2)*(n_0**2*N + 2*n_0*P*Q)/(A**2*N**2*(N**2-1))
+    var_omega = (12*var)/(A**2*T**2*N*(N**2-1))
+    var_phi = (12*var)*(n_0**2*N + 2*n_0*P+Q)/(A**2*N**2*(N**2-1))
 
     return var_omega, var_phi
 
@@ -150,7 +141,7 @@ def main():
                 x, s, w = createSignal(variance)
                 x_fft, freq= fft_x(x, M)
                 #Two ways of calculating the frequency estimate
-                m_star = np.argmax(x_fft)
+                m_star = np.argmax(x_fft)                      #Abs av FFT gir lavere varians
                 dominantFreq = freq[m_star]
                 f_hat = m_star/(M*T)
                 freq_list.append(f_hat)
@@ -173,7 +164,20 @@ def main():
             omega_CRLB, phi_CRLB = calculate_CRLB(variance)
 
             #Write data to excel
-            sheet.write(cntr, 0, '2^'+str(i)) #FFT length
+            if (cntr-1)%len(SNRs) ==0:
+                sheet.write(cntr, 0, '2^'+str(i)) #FFT length
+            sheet.write(cntr, 1, snr_db) #SNR[dB]
+            sheet.write(cntr, 2, mean_freq) #Mean f estimate
+            sheet.write(cntr, 3, mean_freq_error) #Mean f estimate error
+            sheet.write(cntr, 4, mean_phase_error_variance) #Mean f estimate error variance
+            sheet.write(cntr, 5, omega_CRLB) #CRLB freq
+            sheet.write(cntr, 6, mean_phase) #Mean phi esitmate
+            sheet.write(cntr, 7, mean_phase_error) #Mean phi estimate error
+            sheet.write(cntr, 8, mean_phase_error_variance) #Mean phi estimate error variance
+            sheet.write(cntr, 9, phi_CRLB) #CRLB phase
+
+            '''if (cntr-1)%len(SNRs) ==0:
+                sheet.write(cntr, 0, '2^'+str(i)) #FFT length
             sheet.write(cntr, 1, snr_db) #SNR[dB]
             sheet.write(cntr, 2, mean_freq, dec0) #Mean f estimate
             sheet.write(cntr, 3, mean_freq_error, dec0) #Mean f estimate error
@@ -182,9 +186,11 @@ def main():
             sheet.write(cntr, 6, mean_phase, dec3) #Mean phi esitmate
             sheet.write(cntr, 7, mean_phase_error, dec3) #Mean phi estimate error
             sheet.write(cntr, 8, mean_phase_error_variance, dec3) #Mean phi estimate error variance
-            sheet.write(cntr, 9, phi_CRLB, dec3) #CRLB phase
-    print('Data successfully written to '+ sheet_name + '.xls')    
+            sheet.write(cntr, 9, phi_CRLB, dec3) #CRLB phase'''
+    
     wb.save(path)
+    print('Data successfully written to '+ sheet_name + '.xls')    
+    print('Time spent:', time.process_time() - start, 'seconds')
                 
 
     
