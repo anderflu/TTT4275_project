@@ -6,6 +6,7 @@ import statistics as st
 import xlwt
 from xlwt import Workbook
 import os
+from scipy import optimize
 
 #Constants
 F_s = 10**6
@@ -135,6 +136,33 @@ def calculate_CRLB(var):
 
     return var_omega, var_phi
 
+def functionToBeMinimized(f_variable):
+    f_var_sliced=f_variable[0]
+    #Creating all nesicarry signal in this function, one can use the create signal function
+    s=[] #Signal without noise
+    for n in range(N):
+        s.append(A*np.exp(1j*(2*np.pi*f_var_sliced*(n+n_0)*T+phi)))
+    
+    snr_db=60
+    snr=10**(snr_db/10)
+    variance=A**2/(2*snr)
+    stdDev = np.sqrt(variance)
+    w_Re = np.random.normal(0, stdDev, N)                      
+    w_Im = np.random.normal(0, stdDev, N)
+    w= [] #Complex gaussian white noise
+    for n in range(N):
+        w.append(w_Re[n] + 1j*w_Im[n])
+    
+    x=[]#Total signal
+    for n in range (N):
+        x.append(s[n]+w[n])
+
+    fftGuess=np.fft.fft(s,2**10)
+    xbFFT=np.fft.fft(x,2**10)
+
+    MSE=np.square(np.subtract(abs(fftGuess),abs(xbFFT))).mean()
+    return MSE
+
 def main():
 
     cntr = 0
@@ -185,6 +213,25 @@ def main():
             sheet.write(cntr, 9, phi_CRLB, dec3) #CRLB phase
     print('Data successfully written to '+ sheet_name + '.xls')    
     wb.save(path)
+
+    print("Excercise 1b):")
+    result=optimize.minimize(functionToBeMinimized,100000,method='Nelder-Mead')
+
+    mse = []
+    t=[1,2]
+    for f in range(60000,140000,100):
+        t[0]=f
+        mse.append(functionToBeMinimized(t))
+
+    plt.figure(1)
+    plt.title("MSE")
+    plt.xlabel("Frequency [Hz]")
+    plt.ylabel("Mean Square Error")
+    plt.plot(np.arange(60000,140000,100),mse)
+    plt.show()
+    print("The guess with noise and FFT length 2^10 before finetuning: ",)
+    print("The guess after finetuning with snr_dB=60: ", result.x[0])
+
                 
 
     
@@ -195,6 +242,7 @@ main()
 
 #Finne dominant fase til signalet
 
+#Implementere 1b_ny inn i simulation
 
 #FFT-size = 2**20 er ikke mulig. Bruk estimat for FFT size 2**10, og tune estimatet med numerical search method
 #scipy.optimize.minimize using Nelder-Mead in Python
