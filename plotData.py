@@ -22,7 +22,7 @@ phase_CRLB = []
 for row in range(1,9):
     freq_CRLB_val = sheet1.cell(row,5) 
     phase_CRLB_val = sheet1.cell(row,9)
-    freq_CRLB.append(freq_CRLB_val.value/(4*np.pi**2))
+    freq_CRLB.append(freq_CRLB_val.value)
     phase_CRLB.append(phase_CRLB_val.value)
     
 freq = []
@@ -44,26 +44,28 @@ for i in range(0, len(freq),len(x_axis)):
 
 
 def plot_variance(x): #Plots the signals S & w and x in two separate plots
-    #plt.subplots_adjust(vspace = 0.6)
-    plt.subplot(1,2,1)
     plt.title("Variance of frequency")
     plt.xlabel("SNR [dB]")
     plt.ylabel("Variance [Hz^2]")
     plt.yscale('log')
-    plt.plot(x,freq_CRLB, color = 'yellow')
+    plt.legend(['CRLB', '$2^{10}$', '$2^{12}$', '$2^{14}$', '$2^{16}$', '$2^{18}$', '$2^{20}$', ], loc = 'upper right')
+    plt.plot(x,freq_CRLB, color = 'orange')
+    r = chunked_freq[5].count(0)
+    print(r)
+    l=len(x_axis)
     for i in range(6):
         plt.plot(x,chunked_freq[i])
-        
-
-    plt.subplot(1,2,2)
+        #plt.plot(x[:l-chunked_freq[i].count(0)],chunked_freq[i][:l-chunked_freq[i].count(0)])
+    plt.show()
+    
     plt.title("Variance of phase")
     plt.xlabel("SNR [dB]")
     plt.ylabel("Variance [rad^2]")
     plt.yscale('log')
-    plt.plot(x,phase_CRLB, color = 'yellow')
+    plt.plot(x,phase_CRLB, color = 'orange')
     for i in range(6):
         plt.plot(x,chunked_phase[i])
-
+    plt.legend(['CRLB', '$2^{10}$', '$2^{12}$', '$2^{14}$', '$2^{16}$', '$2^{18}$', '$2^{20}$', ], loc = 'upper right')
     plt.show()
 
 
